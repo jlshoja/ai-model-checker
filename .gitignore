@@ -1,0 +1,13 @@
+# Secrets - never commit real API keys
+.env
+
+# Virtual environment
+.venv/
+
+# Generated output
+results/
+opencode.generated.json
+
+# Python cache
+__pycache__/
+*.pyc

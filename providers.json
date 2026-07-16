@@ -1,0 +1,32 @@
+{
+  "providers": {
+    "bluesminds": {
+      "type": "openai",
+      "base_url": "https://api.bluesminds.com/v1",
+      "api_key_env": "BLUESMINDS_API_KEY",
+      "measure_ttft": true
+    },
+    "nararouter": {
+      "type": "openai",
+      "base_url": "https://router.bynara.id/v1",
+      "api_key_env": "NARA_API_KEY",
+      "timeout_seconds": 45
+    },
+    "openrouter": {
+      "type": "openai",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    "agentrouter": {
+      "type": "anthropic",
+      "base_url": "https://api.agentrouter.example/v1",
+      "api_key_env": "AGENTROUTER_API_KEY",
+      "anthropic_version": "2023-06-01",
+      "known_models": []
+    }
+  },
+  "test_prompt": "Reply OK only",
+  "max_tokens": 10,
+  "timeout_seconds": 30,
+  "concurrency": 5
+}
