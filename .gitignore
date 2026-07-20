@@ -1,13 +1,68 @@
-# Secrets - never commit real API keys
+# ============================================
+# Secrets (Never commit real API keys)
+# ============================================
 .env
+.env.*
+!.env.example
 
-# Virtual environment
+# ============================================
+# Python
+# ============================================
 .venv/
-
-# Generated output
-results/
-opencode.generated.json
-
-# Python cache
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# ============================================
+# Generated files
+# ============================================
+results/
+*.generated.json
+*.auto.json
+.env.generated
+.env.auto
+
+# ============================================
+# Backup files
+# ============================================
+backups/
+*.bak
+
+# ============================================
+# Local AI tool configuration
+# ============================================
+.claude/
+.agents/
+.cursor/
+.windsurf/
+.gemini/
+.kiro/
+.continue/
+.aider/
+.aider*
+.opencode/
+.codex/
+.roo/
+.cline/
+
+# ============================================
+# Temporary AI files
+# ============================================
+*.prompt
+*.prompts
+*.conversation
+*.transcript
+
+# ============================================
+# IDE
+# ============================================
+.vscode/
+.idea/
+
+# ============================================
+# Operating System
+# ============================================
+.DS_Store
+Thumbs.db
