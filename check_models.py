@@ -44,8 +44,11 @@ from dotenv import load_dotenv
 try:
     import openpyxl
     from openpyxl.workbook import Workbook
+    from openpyxl import load_workbook as openpyxl_load_workbook
+    OPENPYXL_AVAILABLE = True
 except Exception:
     openpyxl = None
+    OPENPYXL_AVAILABLE = False
 
 
 # --------------------------------------------------------------------------
@@ -509,22 +512,267 @@ def generate_opencode_config(results: list[ModelResult], output_path: Path) -> N
     logger.info("opencode config with %d working model(s) written to %s", working_count, output_path)
 
 
+def merge_opencode_config(results: list[ModelResult], real_config_path: str = None) -> None:
+    """Merge working models into the real opencode config file."""
+    if real_config_path is None:
+        # Default path for opencode config
+        real_config_path = os.path.expanduser("~/.config/opencode/opencode.jsonc")
+    
+    real_config_path = Path(real_config_path)
+    
+    if not real_config_path.exists():
+        logger.warning("Real opencode config not found at %s, skipping merge", real_config_path)
+        return
+    
+    # Load existing config
+    try:
+        with open(real_config_path, 'r', encoding='utf-8') as f:
+            real_config = json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        logger.error("Failed to read real opencode config: %s", e)
+        return
+    
+    # Build new provider entries from working models
+    new_providers = {}
+    for r in results:
+        if r.status != "WORKING":
+            continue
+        if r.provider not in new_providers:
+            new_providers[r.provider] = {"models": {}}
+        new_providers[r.provider]["models"][r.model] = {"name": r.model}
+    
+    # Merge new providers into existing config
+    if "provider" not in real_config:
+        real_config["provider"] = {}
+    
+    for provider_name, provider_data in new_providers.items():
+        if provider_name not in real_config["provider"]:
+            real_config["provider"][provider_name] = provider_data
+        else:
+            # Merge models
+            existing_models = real_config["provider"][provider_name].get("models", {})
+            for model_name, model_config in provider_data["models"].items():
+                if model_name not in existing_models:
+                    existing_models[model_name] = model_config
+    
+    # Write back the merged config
+    try:
+        with open(real_config_path, 'w', encoding='utf-8') as f:
+            json.dump(real_config, f, indent=2, ensure_ascii=False)
+        working_count = sum(1 for r in results if r.status == "WORKING")
+        logger.info("Merged %d working model(s) into real opencode config at %s", working_count, real_config_path)
+    except IOError as e:
+        logger.error("Failed to write merged opencode config: %s", e)
+
+
+def read_providers_from_excel(xlsx_path: Path) -> list[dict]:
+    """Read provider data from Excel file."""
+    if not OPENPYXL_AVAILABLE:
+        raise ImportError("openpyxl is required to read Excel files. Install with: pip install openpyxl")
+    
+    wb = openpyxl_load_workbook(xlsx_path)
+    ws = wb.active
+    
+    headers = [cell.value for cell in ws[1]]
+    
+    providers = []
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row[0] or not isinstance(row[0], str):
+            continue
+        
+        provider = {}
+        for i, header in enumerate(headers):
+            if header and row[i] is not None:
+                value = str(row[i]).strip() if isinstance(row[i], str) else row[i]
+                provider[header] = value
+        
+        if provider.get("Provider Name"):
+            providers.append(provider)
+    
+    return providers
+
+
+def determine_provider_type(provider: dict) -> str:
+    """Determine provider type based on API compatibility."""
+    openai_compat = provider.get("OpenAI Compatible", "").lower()
+    anthropic_compat = provider.get("Anthropic Compatible", "").lower()
+    api_type = provider.get("API Type", "").lower()
+    
+    if anthropic_compat in ("yes", "true", "y"):
+        return "anthropic"
+    elif openai_compat in ("yes", "true", "y", "yes (direct endpoint)"):
+        return "openai"
+    elif api_type in ("openai", "anthropic"):
+        return api_type
+    else:
+        return "openai"
+
+
+def sanitize_name(name: str) -> str:
+    """Sanitize provider name for use as environment variable or JSON key."""
+    import re
+    # Remove parentheses and their contents
+    name = re.sub(r'\(.*?\)', '', name)
+    # Remove special characters and replace spaces with underscores
+    name = re.sub(r'[^a-zA-Z0-9\s\-]', '', name)
+    # Replace spaces and hyphens with underscores
+    name = name.replace(' ', '_').replace('-', '_')
+    # Replace multiple consecutive underscores with single underscore
+    name = re.sub(r'_+', '_', name)
+    # Remove leading/trailing underscores
+    name = name.strip('_')
+    return name
+
+
+def generate_env_file(providers: list[dict], output_path: Path) -> None:
+    """Generate .env file with API keys."""
+    lines = [
+        "# Auto-generated from providers.xlsx",
+        "# Each key name must match the 'api_key_env' value used in providers.json",
+        "",
+    ]
+    
+    for provider in providers:
+        name = provider.get("Provider Name", "")
+        api_key = provider.get("API Key", "")
+        
+        if not name or not api_key:
+            continue
+        
+        env_var = sanitize_name(name).upper() + "_API_KEY"
+        lines.append(f"{env_var}={api_key}")
+        lines.append("")
+    
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def generate_providers_json(providers: list[dict], output_path: Path) -> None:
+    """Generate providers.json file."""
+    config = {
+        "providers": {},
+        "test_prompt": "Reply OK only",
+        "max_tokens": 10,
+        "timeout_seconds": 30,
+        "concurrency": 5
+    }
+    
+    for provider in providers:
+        name = provider.get("Provider Name", "")
+        base_url = provider.get("Base URL", "")
+        
+        if not name or not base_url:
+            continue
+        
+        provider_key = sanitize_name(name).lower()
+        provider_type = determine_provider_type(provider)
+        env_var = sanitize_name(name).upper() + "_API_KEY"
+        
+        provider_config = {
+            "type": provider_type,
+            "base_url": base_url.rstrip("/"),
+            "api_key_env": env_var,
+        }
+        
+        if provider_type == "anthropic":
+            provider_config["anthropic_version"] = provider.get("Anthropic Version", "2023-06-01")
+        
+        recommended_models = provider.get("Recommended Models", "")
+        if recommended_models:
+            models = [m.strip() for m in recommended_models.split(",") if m.strip()]
+            provider_config["known_models"] = models
+        
+        priority = provider.get("Priority", "").lower()
+        if priority in ("high", "recommended"):
+            provider_config["measure_ttft"] = True
+        
+        config["providers"][provider_key] = provider_config
+    
+    output_path.write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def cmd_generate_config(args) -> int:
+    """Generate .env and providers.json from Excel file."""
+    xlsx_path = Path(args.xlsx)
+    output_dir = Path(args.output_dir) if args.output_dir else Path(".")
+    env_path = output_dir / (args.env_file or ".env")
+    providers_path = output_dir / (args.providers or "providers.json")
+    
+    if not xlsx_path.exists():
+        logger.error("Excel file not found: %s", xlsx_path)
+        return 1
+    
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    print(f"Reading providers from: {xlsx_path}")
+    providers = read_providers_from_excel(xlsx_path)
+    print(f"Found {len(providers)} providers in Excel file")
+    
+    generate_env_file(providers, env_path)
+    generate_providers_json(providers, providers_path)
+    
+    print(f"\nGenerated: {env_path}")
+    print(f"Generated: {providers_path}")
+    print("\nYou can now run:")
+    print(f"  python check_models.py --config {providers_path} --env {env_path}")
+    
+    return 0
+
+
 # --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check which AI provider models actually work.")
-    parser.add_argument("--config", default="providers.json", help="path to providers.json")
-    parser.add_argument("--env", default=".env", help="path to .env file with API keys")
-    parser.add_argument("--providers", nargs="*", default=None, help="only check these provider names")
-    parser.add_argument("--output", default="results/models_report.csv", help="CSV report output path")
-    parser.add_argument("--generate-config", default=None, help="also write an opencode-style JSON config of working models")
-    parser.add_argument("--concurrency", type=int, default=None, help="override concurrency from providers.json")
-    parser.add_argument("--timeout", type=int, default=None, help="override per-request timeout (seconds)")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    # Main check command
+    check_parser = subparsers.add_parser("check", help="Check which AI provider models actually work")
+    check_parser.add_argument("--config", default="providers.json", help="path to providers.json")
+    check_parser.add_argument("--env", default=".env", help="path to .env file with API keys")
+    check_parser.add_argument("--providers", nargs="*", default=None, help="only check these provider names")
+    check_parser.add_argument("--output", default="results/models_report.csv", help="CSV report output path")
+    check_parser.add_argument("--generate-config", default=None, help="also write an opencode-style JSON config of working models")
+    check_parser.add_argument("--merge-opencode", action="store_true", help="merge working models into the real opencode config (~/.config/opencode/opencode.jsonc)")
+    check_parser.add_argument("--opencode-path", default=None, help="custom path to opencode config file (default: ~/.config/opencode/opencode.jsonc)")
+    check_parser.add_argument("--concurrency", type=int, default=None, help="override concurrency from providers.json")
+    check_parser.add_argument("--timeout", type=int, default=None, help="override per-request timeout (seconds)")
+    check_parser.add_argument("--auto-update", action="store_true", help="auto-update .env and providers.json from providers.xlsx before running checks")
+    check_parser.add_argument("--xlsx", default="providers.xlsx", help="path to providers.xlsx file (used with --auto-update)")
+    
+    # Generate config command
+    gen_parser = subparsers.add_parser("generate", help="Generate .env and providers.json from Excel file")
+    gen_parser.add_argument("--xlsx", default="providers.xlsx", help="path to providers.xlsx file")
+    gen_parser.add_argument("--env-file", default=".env", help="output path for .env file")
+    gen_parser.add_argument("--providers", default="providers.json", help="output path for providers.json")
+    gen_parser.add_argument("--output-dir", default=".", help="output directory for generated files")
+    
     args = parser.parse_args()
-
-    load_dotenv(args.env)
+    
+    if args.command == "generate":
+        sys.exit(cmd_generate_config(args))
+    
+    # Default to check command if no subcommand specified
+    if args.command is None:
+        args = check_parser.parse_args([])
+    
+    # Auto-update from Excel if requested
+    if getattr(args, 'auto_update', False) and OPENPYXL_AVAILABLE:
+        xlsx_path = Path(getattr(args, 'xlsx', 'providers.xlsx'))
+        if xlsx_path.exists():
+            print(f"Auto-updating config from: {xlsx_path}")
+            providers_data = read_providers_from_excel(xlsx_path)
+            generate_env_file(providers_data, Path(args.env))
+            generate_providers_json(providers_data, Path(args.config))
+            print(f"Updated: {args.env}")
+            print(f"Updated: {args.config}")
+            # Reload environment variables from the updated file
+            load_dotenv(args.env, override=True)
+        else:
+            logger.warning(f"Excel file not found: {xlsx_path}, using existing config files")
+            load_dotenv(args.env)
+    else:
+        load_dotenv(args.env)
 
     config_path = Path(args.config)
     if not config_path.exists():
@@ -554,6 +802,10 @@ def main() -> None:
 
     if args.generate_config:
         generate_opencode_config(results, Path(args.generate_config))
+    
+    if getattr(args, 'merge_opencode', False):
+        opencode_path = getattr(args, 'opencode_path', None)
+        merge_opencode_config(results, opencode_path)
 
     working = sum(1 for r in results if r.status == "WORKING")
     logger.info("Summary: %d/%d models working", working, len(results))

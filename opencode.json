@@ -1,0 +1,279 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "openrouter": {
+      "type": "openai",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "models": {
+        "openrouter/free": {
+          "name": "openrouter/free"
+        },
+        "tencent/hy3:free": {
+          "name": "tencent/hy3:free"
+        }
+      }
+    },
+    "google_ai_studio_gemini": {
+      "type": "openai",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "api_key_env": "GOOGLE_AI_STUDIO_GEMINI_API_KEY",
+      "models": {
+        "models/gemini-3-flash-preview": {
+          "name": "models/gemini-3-flash-preview"
+        },
+        "models/gemini-3.1-flash-lite": {
+          "name": "models/gemini-3.1-flash-lite"
+        },
+        "models/gemini-3.1-flash-lite-preview": {
+          "name": "models/gemini-3.1-flash-lite-preview"
+        },
+        "models/gemini-3.5-flash": {
+          "name": "models/gemini-3.5-flash"
+        },
+        "models/gemini-flash-lite-latest": {
+          "name": "models/gemini-flash-lite-latest"
+        },
+        "models/gemini-robotics-er-1.6-preview": {
+          "name": "models/gemini-robotics-er-1.6-preview"
+        },
+        "models/gemma-4-26b-a4b-it": {
+          "name": "models/gemma-4-26b-a4b-it"
+        },
+        "models/gemma-4-31b-it": {
+          "name": "models/gemma-4-31b-it"
+        }
+      }
+    },
+    "groq": {
+      "type": "openai",
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_key_env": "GROQ_API_KEY",
+      "models": {
+        "allam-2-7b": {
+          "name": "allam-2-7b"
+        },
+        "groq/compound": {
+          "name": "groq/compound"
+        },
+        "groq/compound-mini": {
+          "name": "groq/compound-mini"
+        },
+        "llama-3.1-8b-instant": {
+          "name": "llama-3.1-8b-instant"
+        },
+        "llama-3.3-70b-versatile": {
+          "name": "llama-3.3-70b-versatile"
+        },
+        "meta-llama/llama-4-scout-17b-16e-instruct": {
+          "name": "meta-llama/llama-4-scout-17b-16e-instruct"
+        },
+        "meta-llama/llama-prompt-guard-2-22m": {
+          "name": "meta-llama/llama-prompt-guard-2-22m"
+        },
+        "meta-llama/llama-prompt-guard-2-86m": {
+          "name": "meta-llama/llama-prompt-guard-2-86m"
+        },
+        "openai/gpt-oss-120b": {
+          "name": "openai/gpt-oss-120b"
+        },
+        "openai/gpt-oss-20b": {
+          "name": "openai/gpt-oss-20b"
+        },
+        "openai/gpt-oss-safeguard-20b": {
+          "name": "openai/gpt-oss-safeguard-20b"
+        },
+        "qwen/qwen3-32b": {
+          "name": "qwen/qwen3-32b"
+        },
+        "qwen/qwen3.6-27b": {
+          "name": "qwen/qwen3.6-27b"
+        }
+      }
+    },
+    "cerebras": {
+      "type": "openai",
+      "base_url": "https://api.cerebras.ai/v1",
+      "api_key_env": "CEREBRAS_API_KEY",
+      "models": {
+        "gemma-4-31b": {
+          "name": "gemma-4-31b"
+        },
+        "gpt-oss-120b": {
+          "name": "gpt-oss-120b"
+        },
+        "zai-glm-4.7": {
+          "name": "zai-glm-4.7"
+        }
+      }
+    },
+    "sambanova_cloud": {
+      "type": "openai",
+      "base_url": "https://api.sambanova.ai/v1",
+      "api_key_env": "SAMBANOVA_CLOUD_API_KEY",
+      "models": {
+        "DeepSeek-V3.1": {
+          "name": "DeepSeek-V3.1"
+        },
+        "Meta-Llama-3.3-70B-Instruct": {
+          "name": "Meta-Llama-3.3-70B-Instruct"
+        },
+        "gemma-4-31B-it": {
+          "name": "gemma-4-31B-it"
+        },
+        "gpt-oss-120b": {
+          "name": "gpt-oss-120b"
+        }
+      }
+    },
+    "mistral_ai": {
+      "type": "openai",
+      "base_url": "https://api.mistral.ai/v1",
+      "api_key_env": "MISTRAL_AI_API_KEY",
+      "models": {
+        "codestral-2508": {
+          "name": "codestral-2508"
+        },
+        "codestral-latest": {
+          "name": "codestral-latest"
+        },
+        "devstral-2512": {
+          "name": "devstral-2512"
+        },
+        "devstral-latest": {
+          "name": "devstral-latest"
+        },
+        "devstral-medium-latest": {
+          "name": "devstral-medium-latest"
+        },
+        "magistral-medium-2509": {
+          "name": "magistral-medium-2509"
+        },
+        "magistral-medium-latest": {
+          "name": "magistral-medium-latest"
+        },
+        "magistral-small-2509": {
+          "name": "magistral-small-2509"
+        },
+        "magistral-small-latest": {
+          "name": "magistral-small-latest"
+        },
+        "ministral-14b-2512": {
+          "name": "ministral-14b-2512"
+        },
+        "ministral-14b-latest": {
+          "name": "ministral-14b-latest"
+        },
+        "ministral-3b-2512": {
+          "name": "ministral-3b-2512"
+        },
+        "ministral-3b-latest": {
+          "name": "ministral-3b-latest"
+        },
+        "ministral-8b-2512": {
+          "name": "ministral-8b-2512"
+        },
+        "ministral-8b-latest": {
+          "name": "ministral-8b-latest"
+        },
+        "mistral-code-agent-latest": {
+          "name": "mistral-code-agent-latest"
+        },
+        "mistral-code-fim-latest": {
+          "name": "mistral-code-fim-latest"
+        },
+        "mistral-code-latest": {
+          "name": "mistral-code-latest"
+        },
+        "mistral-large-2512": {
+          "name": "mistral-large-2512"
+        },
+        "mistral-large-latest": {
+          "name": "mistral-large-latest"
+        },
+        "mistral-medium": {
+          "name": "mistral-medium"
+        },
+        "mistral-medium-2505": {
+          "name": "mistral-medium-2505"
+        },
+        "mistral-medium-2508": {
+          "name": "mistral-medium-2508"
+        },
+        "mistral-medium-2604": {
+          "name": "mistral-medium-2604"
+        },
+        "mistral-medium-3": {
+          "name": "mistral-medium-3"
+        },
+        "mistral-medium-3-5": {
+          "name": "mistral-medium-3-5"
+        },
+        "mistral-medium-3.5": {
+          "name": "mistral-medium-3.5"
+        },
+        "mistral-medium-latest": {
+          "name": "mistral-medium-latest"
+        },
+        "mistral-small-2506": {
+          "name": "mistral-small-2506"
+        },
+        "mistral-small-2603": {
+          "name": "mistral-small-2603"
+        },
+        "mistral-small-latest": {
+          "name": "mistral-small-latest"
+        },
+        "mistral-tiny-2407": {
+          "name": "mistral-tiny-2407"
+        },
+        "mistral-tiny-latest": {
+          "name": "mistral-tiny-latest"
+        },
+        "mistral-vibe-cli-fast": {
+          "name": "mistral-vibe-cli-fast"
+        },
+        "mistral-vibe-cli-latest": {
+          "name": "mistral-vibe-cli-latest"
+        },
+        "mistral-vibe-cli-with-tools": {
+          "name": "mistral-vibe-cli-with-tools"
+        },
+        "open-mistral-nemo": {
+          "name": "open-mistral-nemo"
+        },
+        "open-mistral-nemo-2407": {
+          "name": "open-mistral-nemo-2407"
+        },
+        "voxtral-small-2507": {
+          "name": "voxtral-small-2507"
+        },
+        "voxtral-small-latest": {
+          "name": "voxtral-small-latest"
+        }
+      }
+    },
+    "bluesminds": {
+      "type": "openai",
+      "base_url": "https://api.bluesminds.com/v1",
+      "api_key_env": "BLUESMINDS_API_KEY",
+      "models": {
+        "meta/llama-3.1-8b-instruct": {
+          "name": "meta/llama-3.1-8b-instruct"
+        },
+        "nvidia/llama-3.1-nemotron-nano-vl-8b-v1": {
+          "name": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
+        },
+        "nvidia/llama-3.3-nemotron-super-49b-v1": {
+          "name": "nvidia/llama-3.3-nemotron-super-49b-v1"
+        },
+        "nvidia/nemotron-3-nano-30b-a3b": {
+          "name": "nvidia/nemotron-3-nano-30b-a3b"
+        },
+        "upstage/solar-10.7b-instruct": {
+          "name": "upstage/solar-10.7b-instruct"
+        }
+      }
+    }
+  }
+}
